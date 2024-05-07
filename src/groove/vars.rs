@@ -16,11 +16,13 @@ pub struct VarsConstructorData {
     pub link_radius:f64,
     pub base_links: Vec<String>,
     pub ee_links: Vec<String>,
-    starting_config: Vec<f64>
+    starting_config: Vec<f64>,
+    dof_weights: Vec<f64>
 }
 
 pub struct RelaxedIKVars {
     pub robot: Robot,
+    pub dof_weights: Vec<f64>,
     pub init_state: Vec<f64>,
     pub xopt: Vec<f64>,
     pub prev_state: Vec<f64>,
@@ -41,7 +43,7 @@ impl RelaxedIKVars {
         let docs = YamlLoader::load_from_str(contents.as_str()).unwrap();
         let settings = &docs[0];
 
-        let path_to_urdf = path_to_src + "configs/urdfs/" + settings["urdf"].as_str().unwrap();
+        let path_to_urdf = path_to_src + settings["urdf"].as_str().unwrap();
         println!("RelaxedIK is using below URDF file: {}", path_to_urdf);
         let chain = k::Chain::<f64>::from_urdf_file(path_to_urdf.clone()).unwrap();
 
@@ -74,6 +76,21 @@ impl RelaxedIKVars {
             }
         }
 
+        let dof_weights = 
+        if settings["dof_weights"].is_badvalue() {
+            println!("No dof weights provided, using all ones");
+            vec![50.0,50.0,50.0,10.0,10.0,10.0]
+        } else {
+            let dof_weights_arr = settings["dof_weights"].as_vec().unwrap();
+            dof_weights_arr.iter().map(|x| x.as_f64().unwrap()).collect::<Vec<f64>>()
+            // let mut ret= Vec::new();
+            // for i in 0..dof_weights_arr.len() {
+            //     ret.push(dof_weights_arr[i].as_f64().unwrap());
+            // }
+            // ret
+        };
+
+
         let mut init_ee_positions: Vec<Vector3<f64>> = Vec::new();
         let mut init_ee_quats: Vec<UnitQuaternion<f64>> = Vec::new();
         let pose = robot.get_ee_pos_and_quat_immutable(&starting_config);
@@ -84,7 +101,7 @@ impl RelaxedIKVars {
             init_ee_quats.push(pose[i].1);
         }
 
-        RelaxedIKVars{robot, init_state: starting_config.clone(), xopt: starting_config.clone(),
+        RelaxedIKVars{robot, dof_weights,init_state: starting_config.clone(), xopt: starting_config.clone(),
             prev_state: starting_config.clone(), prev_state2: starting_config.clone(), prev_state3: starting_config.clone(),
             goal_positions: init_ee_positions.clone(), goal_quats: init_ee_quats.clone(), tolerances, init_ee_positions, init_ee_quats}
     }
@@ -111,7 +128,7 @@ impl RelaxedIKVars {
             init_ee_quats.push(pose[i].1);
         }
 
-        RelaxedIKVars{robot, init_state: configs.starting_config.clone(), xopt: configs.starting_config.clone(),
+        RelaxedIKVars{robot,dof_weights:configs.dof_weights.clone() , init_state: configs.starting_config.clone(), xopt: configs.starting_config.clone(),
             prev_state: configs.starting_config.clone(), prev_state2: configs.starting_config.clone(), prev_state3: configs.starting_config.clone(),
             goal_positions: init_ee_positions.clone(), goal_quats: init_ee_quats.clone(), tolerances, init_ee_positions, init_ee_quats}
 

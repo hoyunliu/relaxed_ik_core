@@ -23,24 +23,25 @@ impl ObjectiveMaster {
     }
 
 
-    pub fn relaxed_ik(chain_lengths: &[usize]) -> Self {
+    pub fn relaxed_ik(chain_lengths: &[usize],dof_weights:&[f64]) -> Self {
         let mut objectives: Vec<Box<dyn ObjectiveTrait + Send>> = Vec::new();
         let mut weight_priors: Vec<f64> = Vec::new();
         let num_chains = chain_lengths.len();
         let mut num_dofs = 0;
+        println!("dof_weights 2222222: {:?}", dof_weights);
         for i in 0..num_chains {
             objectives.push(Box::new(MatchEEPosiDoF::new(i, 0)));
-            weight_priors.push(50.0);
+            weight_priors.push(dof_weights[0]);
             objectives.push(Box::new(MatchEEPosiDoF::new(i, 1)));
-            weight_priors.push(50.0);
+            weight_priors.push(dof_weights[1]);
             objectives.push(Box::new(MatchEEPosiDoF::new(i, 2)));
-            weight_priors.push(50.0);
+            weight_priors.push(dof_weights[2]);
             objectives.push(Box::new(MatchEERotaDoF::new(i, 0)));
-            weight_priors.push(10.0);
+            weight_priors.push(dof_weights[3]);
             objectives.push(Box::new(MatchEERotaDoF::new(i, 1)));
-            weight_priors.push(10.0);
+            weight_priors.push(dof_weights[4]);
             objectives.push(Box::new(MatchEERotaDoF::new(i, 2)));
-            weight_priors.push(10.0);
+            weight_priors.push(dof_weights[5]);
             // objectives.push(Box::new(EnvCollision::new(i)));
             // weight_priors.push(1.0);
             num_dofs += chain_lengths[i];

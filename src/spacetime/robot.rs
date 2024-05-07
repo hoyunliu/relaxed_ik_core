@@ -9,7 +9,8 @@ pub struct Robot {
     pub num_dofs: usize,
     pub chain_lengths: Vec<usize>,
     pub lower_joint_limits: Vec<f64>,
-    pub upper_joint_limits: Vec<f64>
+    pub upper_joint_limits: Vec<f64>,
+    pub warm_start: bool
 }
 
 impl Robot {
@@ -103,7 +104,7 @@ impl Robot {
             chain_lengths.push(axis_types.len() as usize);
             num_dofs += axis_types.len();
         }
-        Robot{arms, num_chains, chain_lengths, num_dofs, lower_joint_limits, upper_joint_limits}
+        Robot{arms, num_chains, chain_lengths, num_dofs, lower_joint_limits, upper_joint_limits, warm_start: false}
 
     }
 
@@ -125,7 +126,14 @@ impl Robot {
         let mut r = 0;
         for i in 0..self.num_chains {
             r += self.chain_lengths[i];
-            out += self.arms[i].get_manipulability_immutable( &x[l..r] );
+            let mut test= self.arms[i].get_manipulability_immutable( &x[l..r] );
+            if test.is_nan() {
+                if self.warm_start {
+                    println!("!!!!!!!!! NAN !!!!!!!!!");
+                    test=0.0;
+                }
+            }
+            out += test;//self.arms[i].get_manipulability_immutable( &x[l..r] );
             l = r;
         }
         out
