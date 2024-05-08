@@ -70,7 +70,10 @@ pub unsafe extern "C" fn solve_position(ptr: *mut RelaxedIK, pos_goals: *const c
     let quat_vec = quat_slice.to_vec();
     let tolerance_vec = tolerance_slice.to_vec();
 
-    let ja = solve_position_helper(relaxed_ik, pos_vec, quat_vec, tolerance_vec);
+    let ja = match solve_position_helper(relaxed_ik, pos_vec, quat_vec, tolerance_vec){
+        Ok(x) => x,
+        Err(x) => x
+    };
 
     let ptr = ja.as_ptr();
     let len = ja.len();
@@ -161,7 +164,10 @@ pub unsafe extern "C" fn solve(ptr: *mut RelaxedIK, pos_goals: *const c_double, 
     let quat_vec = quat_slice.to_vec();
     let tolerance_vec = tolerance_slice.to_vec();
 
-    let ja = solve_position_helper(relaxed_ik, pos_vec, quat_vec, tolerance_vec);
+    let ja = match solve_position_helper(relaxed_ik, pos_vec, quat_vec, tolerance_vec){
+        Ok(x) => x,
+        Err(x) => x
+    };
 
     let ptr = ja.as_ptr();
     let len = ja.len();
@@ -170,7 +176,7 @@ pub unsafe extern "C" fn solve(ptr: *mut RelaxedIK, pos_goals: *const c_double, 
 }
 
 fn solve_position_helper(relaxed_ik: &mut RelaxedIK, pos_goals: Vec<f64>, quat_goals: Vec<f64>,
-                tolerance: Vec<f64>) -> Vec<f64> {
+                tolerance: Vec<f64>) -> std::result::Result<Vec<f64>,Vec<f64>> {
 
     for i in 0..relaxed_ik.vars.robot.num_chains  {
         relaxed_ik.vars.goal_positions[i] = Vector3::new(pos_goals[3*i], pos_goals[3*i+1], pos_goals[3*i+2]);
@@ -197,7 +203,7 @@ fn solve_velocity_helper(relaxed_ik: &mut RelaxedIK, pos_vels: Vec<f64>, rot_vel
             tolerance[3*i+3], tolerance[3*i+4], tolerance[3*i+5])
     }
 
-    let x = relaxed_ik.solve();
+    let x = relaxed_ik.solve().unwrap();
 
 
     let frames = relaxed_ik.vars.robot.get_frames_immutable(&x);

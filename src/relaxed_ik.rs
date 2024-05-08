@@ -34,7 +34,7 @@ impl RelaxedIK {
         self.vars.reset( x.clone());
     }
 
-    pub fn solve(&mut self) -> Vec<f64> {
+    pub fn solve(&mut self) -> std::result::Result<Vec<f64>,Vec<f64>>{
         let mut out_x = self.vars.xopt.clone();
 
 
@@ -45,10 +45,10 @@ impl RelaxedIK {
         for i in 0..out_x.len() {
             if (out_x[i].is_nan()) {
                 println!("No valid solution found! Returning previous solution: {:?}. End effector position goals: {:?}", self.vars.xopt, self.vars.goal_positions);
-                return self.vars.xopt.clone();
+                return Err(self.vars.xopt.clone());
             }
         }
         self.vars.update(out_x.clone());  
-        out_x
+        Ok(out_x)
     }
 }
